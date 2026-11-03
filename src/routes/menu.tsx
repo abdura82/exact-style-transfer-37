@@ -1,7 +1,7 @@
 import { localIso } from "@/lib/utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useRef, useState } from "react";
-import { Download, Upload, FileDown, UserPlus, Sparkles, Mail, Gauge } from "@/components/app/icons";
+import { Download, Upload, FileDown, UserPlus, Sparkles, Mail} from "@/components/app/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/app/Sheet";
 import { StudentForm, emptyStudent } from "@/components/app/StudentForm";
