@@ -51,17 +51,30 @@ async function toDataUrl(file: File): Promise<string> {
   return c.toDataURL("image/jpeg", 0.85);
 }
 
+/** Quick ranges; the date boxes above still allow any custom start/end. Weeks start on Monday. */
+function rangePresets() {
+  const n = new Date();
+  const y = n.getFullYear(), m = n.getMonth(), d = n.getDate();
+  const dow = (n.getDay() + 6) % 7;
+  const iso = (yy: number, mm: number, dd: number) => localIso(new Date(yy, mm, dd));
+  return [
+    { label: "Bu Hafta", start: iso(y, m, d - dow), end: iso(y, m, d - dow + 6) },
+    { label: "Geçen Hafta", start: iso(y, m, d - dow - 7), end: iso(y, m, d - dow - 1) },
+    { label: "Bu Ay", start: iso(y, m, 1), end: iso(y, m + 1, 0) },
+    { label: "Geçen Ay", start: iso(y, m - 1, 1), end: iso(y, m, 0) },
+  ];
+}
+
 function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="mt-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-3">
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        <label className="relative flex-1 rounded-xl border border-border py-3 text-center text-base">
-          {fmt(value)}
-          <input type="date" value={value} onChange={(e) => e.target.value && onChange(e.target.value)} className="absolute inset-0 opacity-0" />
-        </label>
+        <input type="date" value={value} onChange={(e) => e.target.value && onChange(e.target.value)}
+          className="flex-1 rounded-xl border border-border bg-background px-3 py-3 text-center text-base" />
       </div>
+      <p className="mt-1 text-center text-xs text-muted-foreground">{fmt(value)}</p>
     </div>
   );
 }
@@ -129,7 +142,14 @@ function Kagit() {
         <h3 className="flex items-center gap-3 font-serif text-lg font-bold"><FileText className="h-5 w-5 text-primary" /> Kâğıt Yoklama (Haftalık / Aylık)</h3>
         <DateField label="Başlangıç Tarihi" value={start} onChange={setStart} />
         <DateField label="Bitiş Tarihi" value={end} onChange={setEnd} />
-        <button onClick={() => { setStart(monthStart()); setEnd(localIso()); }} className="mt-4 w-full rounded-xl border border-border py-2 text-sm">Bu Ay</button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {rangePresets().map((p) => (
+            <button key={p.label} onClick={() => { setStart(p.start); setEnd(p.end); }}
+              className={`rounded-xl border py-2 text-sm ${start === p.start && end === p.end ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+              {p.label}
+            </button>
+          ))}
+        </div>
         <p className="mt-5 text-xs text-muted-foreground">Çizelge Fotoğrafları (en fazla {MAX_FILES})</p>
         <div className="mt-2 flex flex-wrap gap-2">
           <label className="flex items-center gap-3 rounded-xl border border-dashed border-border px-5 py-2 text-sm text-muted-foreground">
