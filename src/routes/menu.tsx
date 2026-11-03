@@ -1,7 +1,7 @@
 import { localIso } from "@/lib/utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useRef, useState } from "react";
-import { Download, Upload, FileDown, UserPlus, Sparkles, Mail, Gauge } from "@/components/app/icons";
+import { Download, Upload, FileDown, UserPlus, Sparkles, Mail} from "@/components/app/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/app/Sheet";
 import { StudentForm, emptyStudent } from "@/components/app/StudentForm";
@@ -15,7 +15,6 @@ const EmailReports = lazy(() => import("@/components/app/EmailReports").then((m)
 const ReportSheet = lazy(() => import("@/components/app/ReportSheet").then((m) => ({ default: m.ReportSheet })));
 const BlankAttendanceSheet = lazy(() => import("@/components/app/BlankAttendanceSheet").then((m) => ({ default: m.BlankAttendanceSheet })));
 const PhotoNamesImport = lazy(() => import("@/components/app/PhotoNamesImport").then((m) => ({ default: m.PhotoNamesImport })));
-const PerfDiagnosis = lazy(() => import("@/components/app/PerfDiagnosis").then((m) => ({ default: m.PerfDiagnosis })));
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
@@ -39,7 +38,6 @@ function Menu() {
   const [blankOpen, setBlankOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [mailOpen, setMailOpen] = useState(false);
-  const [perfOpen, setPerfOpen] = useState(false);
 
   // Backups always hold both groups.
   const exportData = async () => {
@@ -94,13 +92,11 @@ function Menu() {
           {mailOpen && <EmailReports open onClose={() => setMailOpen(false)} />}
           {reportOpen && <ReportSheet open onClose={() => setReportOpen(false)} />}
           {blankOpen && <BlankAttendanceSheet open onClose={() => setBlankOpen(false)} />}
-          {perfOpen && <PerfDiagnosis open onClose={() => setPerfOpen(false)} />}
         </Suspense>
         <Button variant="outline" onClick={() => setBlankOpen(true)} className="h-auto w-full justify-start whitespace-normal py-4"><FileDown className="text-primary" /> Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
         <button onClick={exportData} className={btn}><Download className="h-5 w-5 text-primary" /> Verileri Yedekle (indir)</button>
         <button onClick={() => fileRef.current?.click()} className={btn}><Upload className="h-5 w-5 text-primary" /> Yedeği Geri Yükle</button>
         <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => importData(e.target.files?.[0])} />
-        <button onClick={() => setPerfOpen(true)} className={btn}><Gauge className="h-5 w-5 text-primary" /> Yavaşlık Teşhisi (AI)</button>
         {msg && <p className="text-center text-sm text-primary">{msg}</p>}
         <p className="text-center text-xs text-muted-foreground">Veriler bu cihazda saklanır.</p>
       </div>
