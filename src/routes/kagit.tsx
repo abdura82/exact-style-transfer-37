@@ -79,25 +79,36 @@ function Kagit() {
   const [blankOpen, setBlankOpen] = useState(false);
   const nameOf = (id: string) => students.find((s) => s.id === id)?.name ?? "?";
 
-  const addFiles = (list: FileList | null) => {
-    setFiles((f) => [...f, ...Array.from(list ?? [])].slice(0, MAX_FILES));
-    setRows(null); setSaved(false); setError("");
+  const saveRows = (list: PaperRow[]) => {
+    const byDate: Record<string, PaperRow[]> = {};
+    for (const r of list) (byDate[r.date] ??= []).push(r);
+    for (const [date, l] of Object.entries(byDate)) saveDay(date, l.map((r) => ({ studentId: r.studentId, vakitler: r.vakitler, ders: r.ders, durum: "normal" as const, durumlar: r.durumlar ?? {} })));
+    setSaved(true);
   };
 
-  const run = async () => {
+  // Photos are analysed and written into Yoklama automatically as soon as they are added.
+  const run = async (list: File[] = files) => {
+    if (!list.length || !students.length) return;
     setBusy(true); setError(""); setRows(null); setSaved(false);
     try {
       if (start > end) throw new Error("Başlangıç tarihi bitişten sonra olamaz.");
-      const images = await Promise.all(files.map(toDataUrl));
+      const images = await Promise.all(list.map(toDataUrl));
       const res = await analyze({ data: { images, students: students.map((s) => ({ id: s.id, name: s.name })), start, end } });
       if (!res.ok) setError(res.error);
       else if (!res.rows.length) setError("Fotoğrafta kayıtlı talebelerle eşleşen yoklama bulunamadı.");
-      else setRows(res.rows);
+      else { setRows(res.rows); saveRows(res.rows); }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analiz yapılamadı. Lütfen tekrar deneyin.");
     } finally {
       setBusy(false);
     }
+  };
+
+  const addFiles = (fl: FileList | null) => {
+    const next = [...files, ...Array.from(fl ?? [])].slice(0, MAX_FILES);
+    setFiles(next);
+    setRows(null); setSaved(false); setError("");
+    void run(next);
   };
 
   const toggle = (i: number, c: string) => {
@@ -106,12 +117,7 @@ function Kagit() {
   };
   const doubtful = (rows ?? []).reduce((a, r) => a + r.supheli.length, 0);
 
-  const save = () => {
-    const byDate: Record<string, PaperRow[]> = {};
-    for (const r of rows ?? []) (byDate[r.date] ??= []).push(r);
-    for (const [date, list] of Object.entries(byDate)) saveDay(date, list.map((r) => ({ studentId: r.studentId, vakitler: r.vakitler, ders: r.ders, durum: "normal" as const, durumlar: r.durumlar ?? {} })));
-    setSaved(true);
-  };
+  const save = () => saveRows(rows ?? []);
 
   return (
     <>
