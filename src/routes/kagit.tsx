@@ -79,25 +79,36 @@ function Kagit() {
   const [blankOpen, setBlankOpen] = useState(false);
   const nameOf = (id: string) => students.find((s) => s.id === id)?.name ?? "?";
 
-  const addFiles = (list: FileList | null) => {
-    setFiles((f) => [...f, ...Array.from(list ?? [])].slice(0, MAX_FILES));
-    setRows(null); setSaved(false); setError("");
+  const saveRows = (list: PaperRow[]) => {
+    const byDate: Record<string, PaperRow[]> = {};
+    for (const r of list) (byDate[r.date] ??= []).push(r);
+    for (const [date, l] of Object.entries(byDate)) saveDay(date, l.map((r) => ({ studentId: r.studentId, vakitler: r.vakitler, ders: r.ders, durum: "normal" as const, durumlar: r.durumlar ?? {} })));
+    setSaved(true);
   };
 
-  const run = async () => {
+  // Photos are analysed and written into Yoklama automatically as soon as they are added.
+  const run = async (list: File[] = files) => {
+    if (!list.length || !students.length) return;
     setBusy(true); setError(""); setRows(null); setSaved(false);
     try {
       if (start > end) throw new Error("Başlangıç tarihi bitişten sonra olamaz.");
-      const images = await Promise.all(files.map(toDataUrl));
+      const images = await Promise.all(list.map(toDataUrl));
       const res = await analyze({ data: { images, students: students.map((s) => ({ id: s.id, name: s.name })), start, end } });
       if (!res.ok) setError(res.error);
       else if (!res.rows.length) setError("Fotoğrafta kayıtlı talebelerle eşleşen yoklama bulunamadı.");
-      else setRows(res.rows);
+      else { setRows(res.rows); saveRows(res.rows); }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analiz yapılamadı. Lütfen tekrar deneyin.");
     } finally {
       setBusy(false);
     }
+  };
+
+  const addFiles = (fl: FileList | null) => {
+    const next = [...files, ...Array.from(fl ?? [])].slice(0, MAX_FILES);
+    setFiles(next);
+    setRows(null); setSaved(false); setError("");
+    void run(next);
   };
 
   const toggle = (i: number, c: string) => {
@@ -106,19 +117,14 @@ function Kagit() {
   };
   const doubtful = (rows ?? []).reduce((a, r) => a + r.supheli.length, 0);
 
-  const save = () => {
-    const byDate: Record<string, PaperRow[]> = {};
-    for (const r of rows ?? []) (byDate[r.date] ??= []).push(r);
-    for (const [date, list] of Object.entries(byDate)) saveDay(date, list.map((r) => ({ studentId: r.studentId, vakitler: r.vakitler, ders: r.ders, durum: "normal" as const, durumlar: r.durumlar ?? {} })));
-    setSaved(true);
-  };
+  const save = () => saveRows(rows ?? []);
 
   return (
     <>
       <h2 className="mt-7 font-serif text-3xl font-bold">Kâğıt Yoklama</h2>
       <Button variant="outline" onClick={() => setBlankOpen(true)} className="mt-4 h-auto w-full whitespace-normal py-3"><FileText />Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
       <BlankAttendanceSheet open={blankOpen} onClose={() => setBlankOpen(false)} />
-      <p className="mt-2 text-sm text-muted-foreground">Haftalık veya aylık kâğıt yoklamanın fotoğrafını yükleyin — yapay zekâ kayıtları çıkarır, kontrol edip kaydedersiniz.</p>
+      <p className="mt-2 text-sm text-muted-foreground">Haftalık veya aylık kâğıt yoklamanın fotoğrafını yükleyin — yapay zekâ kayıtları çıkarır, otomatik olarak Yoklama'ya kaydedilir; gerekirse düzeltip tekrar kaydedebilirsiniz.</p>
       <div className="mt-5 rounded-2xl border border-border bg-card p-5">
         <h3 className="flex items-center gap-3 font-serif text-lg font-bold"><FileText className="h-5 w-5 text-primary" /> Kâğıt Yoklama (Haftalık / Aylık)</h3>
         <DateField label="Başlangıç Tarihi" value={start} onChange={setStart} />
@@ -142,7 +148,7 @@ function Kagit() {
           </p>
         )}
         {students.length === 0 && <p className="mt-3 text-xs text-destructive">Analiz için önce Menü'den talebe ekleyin.</p>}
-        <button onClick={run} disabled={!files.length || !students.length || busy} className="mt-4 flex items-center gap-3 rounded-xl bg-primary px-6 py-2.5 text-sm text-primary-foreground disabled:opacity-50">
+        <button onClick={() => run()} disabled={!files.length || !students.length || busy} className="mt-4 flex items-center gap-3 rounded-xl bg-primary px-6 py-2.5 text-sm text-primary-foreground disabled:opacity-50">
           <Sparkles className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} /> {busy ? "Analiz ediliyor… (1 dk sürebilir)" : "AI ile Analiz Et"}
         </button>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
