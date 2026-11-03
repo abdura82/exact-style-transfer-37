@@ -124,7 +124,7 @@ function Kagit() {
       <h2 className="mt-7 font-serif text-3xl font-bold">Kâğıt Yoklama</h2>
       <Button variant="outline" onClick={() => setBlankOpen(true)} className="mt-4 h-auto w-full whitespace-normal py-3"><FileText />Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
       <BlankAttendanceSheet open={blankOpen} onClose={() => setBlankOpen(false)} />
-      <p className="mt-2 text-sm text-muted-foreground">Haftalık veya aylık kâğıt yoklamanın fotoğrafını yükleyin — yapay zekâ kayıtları çıkarır, kontrol edip kaydedersiniz.</p>
+      <p className="mt-2 text-sm text-muted-foreground">Haftalık veya aylık kâğıt yoklamanın fotoğrafını yükleyin — yapay zekâ kayıtları çıkarır, otomatik olarak Yoklama'ya kaydedilir; gerekirse düzeltip tekrar kaydedebilirsiniz.</p>
       <div className="mt-5 rounded-2xl border border-border bg-card p-5">
         <h3 className="flex items-center gap-3 font-serif text-lg font-bold"><FileText className="h-5 w-5 text-primary" /> Kâğıt Yoklama (Haftalık / Aylık)</h3>
         <DateField label="Başlangıç Tarihi" value={start} onChange={setStart} />
@@ -148,7 +148,7 @@ function Kagit() {
           </p>
         )}
         {students.length === 0 && <p className="mt-3 text-xs text-destructive">Analiz için önce Menü'den talebe ekleyin.</p>}
-        <button onClick={run} disabled={!files.length || !students.length || busy} className="mt-4 flex items-center gap-3 rounded-xl bg-primary px-6 py-2.5 text-sm text-primary-foreground disabled:opacity-50">
+        <button onClick={() => run()} disabled={!files.length || !students.length || busy} className="mt-4 flex items-center gap-3 rounded-xl bg-primary px-6 py-2.5 text-sm text-primary-foreground disabled:opacity-50">
           <Sparkles className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} /> {busy ? "Analiz ediliyor… (1 dk sürebilir)" : "AI ile Analiz Et"}
         </button>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
